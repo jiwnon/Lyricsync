@@ -19,6 +19,14 @@ models/
 *.wav
 *.mp3
 
+# Test / sample media (용량 큼, git에 올리지 않음)
+*.mp4
+*.mkv
+*.avi
+
+# Temp
+test_output.txt
+
 # OS
 .DS_Store
 Thumbs.db

@@ -6,12 +6,8 @@ import gradio as gr
 from pipeline import run
 from src.srt_writer import write_srt, segments_to_srt_text
 
-_current_segments: list[dict] = []
-
 
 def generate(video_file, lyrics_file, language, progress=gr.Progress()):
-    global _current_segments
-
     if video_file is None or lyrics_file is None:
         return "영상과 가사 파일을 모두 업로드해주세요.", None, None
 
@@ -41,11 +37,9 @@ def generate(video_file, lyrics_file, language, progress=gr.Progress()):
     except Exception as e:
         return f"오류 발생: {e}", None, None
 
-    _current_segments = segments
-
-    # Build editable table data: [index, start, end, text]
+    # [index, start(float), end(float), text] — float so Gradio stores as number
     table = [
-        [i + 1, f"{s['start']:.3f}", f"{s['end']:.3f}", s["text"]]
+        [i + 1, s["start"], s["end"], s["text"]]
         for i, s in enumerate(segments)
     ]
 
@@ -54,14 +48,19 @@ def generate(video_file, lyrics_file, language, progress=gr.Progress()):
 
 
 def export_edited(table_data):
-    """Re-export SRT after user edits the table."""
-    if not table_data:
+    """Re-export SRT after user edits the table.
+    Gradio passes gr.Dataframe contents as a pandas DataFrame.
+    """
+    if table_data is None or len(table_data) == 0:
         return None
 
     segments = []
-    for row in table_data:
-        _, start, end, text = row
-        segments.append({"text": text, "start": float(start), "end": float(end)})
+    for _, row in table_data.iterrows():
+        segments.append({
+            "text": str(row.iloc[3]),
+            "start": float(row.iloc[1]),
+            "end": float(row.iloc[2]),
+        })
 
     out_path = str(Path(tempfile.gettempdir()) / "lyricsync_edited.srt")
     write_srt(segments, out_path)
@@ -74,7 +73,7 @@ with gr.Blocks(title="LyricSync") as demo:
 
     with gr.Row():
         with gr.Column(scale=1):
-            video_input = gr.File(label="영상 파일", file_types=["video"])
+            video_input = gr.File(label="영상 파일", file_types=[".mp4", ".mkv", ".avi", ".mov", ".webm"])
             lyrics_input = gr.File(label="가사 txt 파일", file_types=[".txt"])
             language = gr.Dropdown(
                 choices=["ko", "en", "ja", "zh"],

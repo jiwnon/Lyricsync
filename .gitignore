@@ -27,6 +27,9 @@ models/
 # Temp
 test_output.txt
 
+# 로컬 실행 스크립트
+실행.bat
+
 # OS
 .DS_Store
 Thumbs.db

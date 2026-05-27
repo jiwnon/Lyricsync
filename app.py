@@ -9,7 +9,7 @@ from src.srt_writer import write_srt, segments_to_srt_text
 _current_segments: list[dict] = []
 
 
-def generate(video_file, lyrics_file, model_size, language, progress=gr.Progress()):
+def generate(video_file, lyrics_file, language, progress=gr.Progress()):
     global _current_segments
 
     if video_file is None or lyrics_file is None:
@@ -34,7 +34,7 @@ def generate(video_file, lyrics_file, model_size, language, progress=gr.Progress
         segments, srt_path = run(
             video_path=video_file,
             lyrics_path=lyrics_file,
-            model_size=model_size,
+            model_size="medium",
             language=language,
             progress_callback=on_progress,
         )
@@ -76,11 +76,6 @@ with gr.Blocks(title="LyricSync") as demo:
         with gr.Column(scale=1):
             video_input = gr.File(label="영상 파일", file_types=["video"])
             lyrics_input = gr.File(label="가사 txt 파일", file_types=[".txt"])
-            model_size = gr.Dropdown(
-                choices=["tiny", "base", "small", "medium", "large-v2", "large-v3"],
-                value="large-v2",
-                label="Whisper 모델 크기",
-            )
             language = gr.Dropdown(
                 choices=["ko", "en", "ja", "zh"],
                 value="ko",
@@ -109,7 +104,7 @@ with gr.Blocks(title="LyricSync") as demo:
 
     run_btn.click(
         fn=generate,
-        inputs=[video_input, lyrics_input, model_size, language],
+        inputs=[video_input, lyrics_input, language],
         outputs=[srt_preview, segment_table, download_btn],
     )
 
@@ -120,4 +115,4 @@ with gr.Blocks(title="LyricSync") as demo:
     )
 
 if __name__ == "__main__":
-    demo.launch()
+    demo.launch(inbrowser=True)
